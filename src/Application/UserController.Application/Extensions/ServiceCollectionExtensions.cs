@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     {
         // TODO: add services
         collection.AddScoped<IUserService, UserService>();
+        collection.AddScoped<ICharacterService, CharacterService>();
         return collection;
     }
 }

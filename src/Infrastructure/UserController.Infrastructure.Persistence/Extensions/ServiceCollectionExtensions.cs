@@ -22,6 +22,7 @@ public static class ServiceCollectionExtensions
         collection.AddScoped<IPersistenceContext, PersistenceContext>();
 
         collection.AddScoped<IUserRepository, UserRepository>();
+        collection.AddScoped<ICharacterRepository, CharacterRepository>();
 
         return collection;
     }
