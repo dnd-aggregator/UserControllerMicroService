@@ -1,6 +1,6 @@
 ﻿syntax = "proto3";
 
-option csharp_namespace = "YourProject.Proto";
+option csharp_namespace = "CharactersGrpc.Proto";
 
 package character;
 
