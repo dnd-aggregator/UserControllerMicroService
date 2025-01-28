@@ -10,6 +10,7 @@ public static class ApplicationBuilderExtensions
         builder.UseEndpoints(routeBuilder =>
         {
             routeBuilder.MapGrpcService<UserGrpcController>();
+            routeBuilder.MapGrpcService<CharacterGrpcController>();
             routeBuilder.MapGrpcReflectionService();
         });
 

@@ -31,8 +31,10 @@ public class UserRepository : IUserRepository
             .AddParameter("@name", user.Name)
             .AddParameter("@phone_number", user.PhoneNumber);
 
-        int result = await command.ExecuteNonQueryAsync(cancellationToken);
-        return result;
+        await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        while (await reader.ReadAsync(cancellationToken)) return reader.GetInt64(0);
+        throw new InvalidOperationException();
     }
 
     public async Task<UserModel?> GetUser(long userId, CancellationToken cancellationToken)

@@ -1,7 +1,7 @@
-﻿using Grpc.Core;
+﻿using CharactersGrpc.Proto;
+using Grpc.Core;
 using UserController.Application.Contracts;
 using UserController.Application.Contracts.Reqests;
-using YourProject.Proto;
 
 namespace UserController.Presentation.Grpc.Controllers;
 

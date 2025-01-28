@@ -53,7 +53,16 @@ public class CharacterRepository : ICharacterRepository
             .AddParameter("@user_id", character.UserId)
             .AddParameter("@status", (int)character.Status);
 
-        long characterId = await command.ExecuteNonQueryAsync(cancellationToken);
+        DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        long characterId = 0;
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            characterId = reader.GetInt64(0);
+        }
+
+        await reader.DisposeAsync();
 
         const string gearSql =
             "INSERT INTO character_gear (character_id, gear_item) VALUES (@character_id, @gear_item);";
