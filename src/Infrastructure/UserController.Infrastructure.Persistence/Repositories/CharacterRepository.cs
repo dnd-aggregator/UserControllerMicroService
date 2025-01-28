@@ -151,9 +151,114 @@ public class CharacterRepository : ICharacterRepository
         return character;
     }
 
-    public Task UpdateCharacter(CharacterModel character, CancellationToken cancellationToken = default)
+    public async Task UpdateCharacter(CharacterModel character, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        const string updateCharacterSql = """
+                                          UPDATE characters
+                                          SET character_name = @character_name,
+                                              character_description = @character_description,
+                                              character_level = @character_level,
+                                              race = @race,
+                                              world_view = @world_view,
+                                              speed = @speed,
+                                              defence = @defence,
+                                              health = @health,
+                                              max_health = @max_health,
+                                              strenth = @strenth,
+                                              dexterity = @dexterity,
+                                              endurance = @endurance,
+                                              intelligence = @intelligence,
+                                              wisdom = @wisdom,
+                                              bonus = @bonus,
+                                              personality_traits = @personality_traits,
+                                              ideals = @ideals,
+                                              bonds = @bonds,
+                                              flaws = @flaws,
+                                              history = @history,
+                                              status = @status
+                                          WHERE character_id = @character_id;
+                                          """;
+
+        await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
+
+        await using IPersistenceCommand characterCommand = connection.CreateCommand(updateCharacterSql)
+            .AddParameter("@character_id", character.CharacterId)
+            .AddParameter("@character_name", character.CharacterName)
+            .AddParameter("@character_description", character.CharacterDescription)
+            .AddParameter("@character_level", character.CharacterLevel)
+            .AddParameter("@race", character.Race)
+            .AddParameter("@world_view", character.WorldView)
+            .AddParameter("@speed", character.Speed)
+            .AddParameter("@defence", character.Defence)
+            .AddParameter("@health", character.Health)
+            .AddParameter("@max_health", character.MaxHealth)
+            .AddParameter("@strenth", character.Strenth)
+            .AddParameter("@dexterity", character.Dexterity)
+            .AddParameter("@endurance", character.Endurance)
+            .AddParameter("@intelligence", character.Intelligence)
+            .AddParameter("@wisdom", character.Wisdom)
+            .AddParameter("@bonus", character.Bonus)
+            .AddParameter("@personality_traits", character.PersonalityTraits)
+            .AddParameter("@ideals", character.Ideals)
+            .AddParameter("@bonds", character.Bonds)
+            .AddParameter("@flaws", character.Flaws)
+            .AddParameter("@history", character.History)
+            .AddParameter("@status", (int)character.Status);
+
+        await characterCommand.ExecuteNonQueryAsync(cancellationToken);
+
+        await UpdateCharacterRelatedData(
+            "character_gear",
+            "gear_item",
+            character.CharacterId,
+            character.Gear,
+            connection,
+            cancellationToken);
+        await UpdateCharacterRelatedData(
+            "character_weapons",
+            "weapon_item",
+            character.CharacterId,
+            character.Weapons,
+            connection,
+            cancellationToken);
+        await UpdateCharacterRelatedData(
+            "character_active_skills",
+            "active_skill",
+            character.CharacterId,
+            character.ActiveSkills,
+            connection,
+            cancellationToken);
+        await UpdateCharacterRelatedData(
+            "character_passive_skills",
+            "passive_skill",
+            character.CharacterId,
+            character.PassiveSkills,
+            connection,
+            cancellationToken);
+    }
+
+    private async Task UpdateCharacterRelatedData(
+        string tableName,
+        string columnName,
+        long characterId,
+        IReadOnlyCollection<string> newData,
+        IPersistenceConnection connection,
+        CancellationToken cancellationToken)
+    {
+        string deleteSql = $"DELETE FROM {tableName} WHERE character_id = @character_id;";
+        await using IPersistenceCommand deleteCommand = connection.CreateCommand(deleteSql)
+            .AddParameter("@character_id", characterId);
+        await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+
+        string insertSql =
+            $"INSERT INTO {tableName} (character_id, {columnName}) VALUES (@character_id, @{columnName});";
+        foreach (string item in newData)
+        {
+            await using IPersistenceCommand insertCommand = connection.CreateCommand(insertSql)
+                .AddParameter("@character_id", characterId)
+                .AddParameter($"@{columnName}", item);
+            await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+        }
     }
 
     private async Task<IReadOnlyCollection<string>> GetCharacterRelatedData(
