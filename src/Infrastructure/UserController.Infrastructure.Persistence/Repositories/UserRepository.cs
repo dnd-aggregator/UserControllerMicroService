@@ -1,19 +1,18 @@
-﻿using Itmo.Dev.Platform.Persistence.Abstractions.Commands;
-using Itmo.Dev.Platform.Persistence.Abstractions.Connections;
+﻿using Npgsql;
 using System.Data.Common;
-using UserController.Application.Abstractions.Persistence.Repositories;
+using UserController.Application.Abstractions.Repositories;
 using UserController.Application.Models;
 
 namespace UserController.Infrastructure.Persistence.Repositories;
 
 public class UserRepository : IUserRepository
 {
-    private readonly IPersistenceConnectionProvider _connectionProvider;
+    private readonly NpgsqlDataSource _dataSource;
     private readonly ICharacterRepository _characterRepository;
 
-    public UserRepository(IPersistenceConnectionProvider connectionProvider, ICharacterRepository characterRepository)
+    public UserRepository(NpgsqlDataSource dataSource, ICharacterRepository characterRepository)
     {
-        _connectionProvider = connectionProvider;
+        _dataSource = dataSource;
         _characterRepository = characterRepository;
     }
 
@@ -25,11 +24,11 @@ public class UserRepository : IUserRepository
                            RETURNING user_id";"
                            """;
 
-        await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
 
-        await using IPersistenceCommand command = connection.CreateCommand(sql)
-            .AddParameter("@name", user.Name)
-            .AddParameter("@phone_number", user.PhoneNumber);
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.Add(new NpgsqlParameter("name", user.Name));
+        command.Parameters.Add(new NpgsqlParameter("phone_number", user.PhoneNumber));
 
         await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
@@ -45,10 +44,15 @@ public class UserRepository : IUserRepository
                            WHERE user_id = @user_id;
                            """;
 
-        await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
 
-        await using IPersistenceCommand command = connection.CreateCommand(sql)
-            .AddParameter("@user_id", userId);
+        await using var command = new NpgsqlCommand(sql, connection)
+        {
+            Parameters =
+            {
+                new NpgsqlParameter("user_id", userId)
+            }
+        };
 
         await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         if (await reader.ReadAsync(cancellationToken))
@@ -74,12 +78,17 @@ public class UserRepository : IUserRepository
                            WHERE user_id = @user_id;
                            """;
 
-        await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
 
-        await using IPersistenceCommand command = connection.CreateCommand(sql)
-            .AddParameter("@user_id", user.Id)
-            .AddParameter("@name", user.Name)
-            .AddParameter("@phone_number", user.PhoneNumber);
+        await using var command = new NpgsqlCommand(sql, connection)
+        {
+            Parameters =
+            {
+                new NpgsqlParameter("user_id", user.Id),
+                new NpgsqlParameter("name", user.Name),
+                new NpgsqlParameter("phone_number", user.PhoneNumber)
+            }
+        };
 
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
@@ -93,10 +102,10 @@ public class UserRepository : IUserRepository
                            WHERE user_id = @user_id;
                            """;
 
-        await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
 
-        await using IPersistenceCommand command = connection.CreateCommand(sql)
-            .AddParameter("@user_id", userId);
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.Add(new NpgsqlParameter("user_id", userId));
 
         await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))

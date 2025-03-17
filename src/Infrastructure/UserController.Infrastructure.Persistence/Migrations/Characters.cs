@@ -1,13 +1,11 @@
 ﻿using FluentMigrator;
-using Itmo.Dev.Platform.Persistence.Postgres.Migrations;
 
 namespace UserController.Infrastructure.Persistence.Migrations;
 
 [Migration(1731950000, "create_characters_and_related_tables")]
-public class Characters : SqlMigration
+public class Characters : Migration
 {
-    protected override string GetUpSql(IServiceProvider serviceProvider) =>
-        """
+    private const  string UpSql = """
         CREATE TABLE characters (
             character_id BIGSERIAL PRIMARY KEY,
             user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
@@ -59,7 +57,7 @@ public class Characters : SqlMigration
         );
         """;
 
-    protected override string GetDownSql(IServiceProvider serviceProvider) =>
+    private const string GetDownSql = 
         """
         DROP TABLE character_passive_skills;
         DROP TABLE character_active_skills;
@@ -67,4 +65,14 @@ public class Characters : SqlMigration
         DROP TABLE character_gear;
         DROP TABLE characters;
         """;
+
+    public override void Up()
+    {
+        Execute.Sql(UpSql);
+    }
+
+    public override void Down()
+    {
+        Execute.Sql(GetDownSql);
+    }
 }

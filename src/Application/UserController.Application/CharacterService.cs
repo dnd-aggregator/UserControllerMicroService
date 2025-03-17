@@ -1,4 +1,4 @@
-﻿using UserController.Application.Abstractions.Persistence;
+﻿using UserController.Application.Abstractions.Repositories;
 using UserController.Application.Contracts;
 using UserController.Application.Contracts.Reqests;
 using UserController.Application.Models;
@@ -7,11 +7,13 @@ namespace UserController.Application;
 
 public class CharacterService : ICharacterService
 {
-    private readonly IPersistenceContext _context;
+    private readonly IUserRepository _userRepository;
+    private readonly ICharacterRepository _characterRepository;
 
-    public CharacterService(IPersistenceContext context)
+    public CharacterService(IUserRepository userRepository, ICharacterRepository characterRepository)
     {
-        _context = context;
+        _userRepository = userRepository;
+        _characterRepository = characterRepository;
     }
 
     public async Task<long> RegisterCharacter(
@@ -19,7 +21,7 @@ public class CharacterService : ICharacterService
         long userId,
         CancellationToken ct = default)
     {
-        UserModel? user = await _context.UserRepository.GetUser(userId, ct);
+        UserModel? user = await _userRepository.GetUser(userId, ct);
         if (user == null) throw new FileNotFoundException();
 
         var model = new CharacterModel(
@@ -48,20 +50,20 @@ public class CharacterService : ICharacterService
             createCharacterModel.ActiveSkills,
             createCharacterModel.PassiveSkills,
             userId);
-        long id = await _context.CharacterRepository.AddCharacter(model, ct);
+        long id = await _characterRepository.AddCharacter(model, ct);
         user.AddCharacter(model);
-        await _context.UserRepository.UpdateUser(user, ct);
+        await _userRepository.UpdateUser(user, ct);
         return id;
     }
 
     public async Task<CharacterModel?> GetCharacter(long characterId, CancellationToken ct = default)
     {
-        CharacterModel? model = await _context.CharacterRepository.GetCharacter(characterId, ct);
+        CharacterModel? model = await _characterRepository.GetCharacter(characterId, ct);
         return model;
     }
 
     public async Task UpdateCharacter(CharacterModel characterModel, CancellationToken ct = default)
     {
-        await _context.CharacterRepository.UpdateCharacter(characterModel, ct);
+        await _characterRepository.UpdateCharacter(characterModel, ct);
     }
 }

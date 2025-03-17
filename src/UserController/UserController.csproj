@@ -9,11 +9,9 @@
         <ProjectReference Include="..\Infrastructure\UserController.Infrastructure.Persistence\UserController.Infrastructure.Persistence.csproj"/>
         <ProjectReference Include="..\Presentation\UserController.Presentation.Grpc\UserController.Presentation.Grpc.csproj"/>
         <ProjectReference Include="..\Presentation\UserController.Presentation.Http\UserController.Presentation.Http.csproj" />
-        <ProjectReference Include="..\Presentation\UserController.Presentation.Kafka\UserController.Presentation.Kafka.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Itmo.Dev.Platform.Observability" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
         <PackageReference Include="Swashbuckle.AspNetCore" />
     </ItemGroup>

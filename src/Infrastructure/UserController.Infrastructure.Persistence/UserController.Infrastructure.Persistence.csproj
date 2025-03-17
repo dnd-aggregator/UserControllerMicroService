@@ -5,8 +5,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Itmo.Dev.Platform.Persistence.Postgres" />
+        <PackageReference Include="FluentMigrator" />
+        <PackageReference Include="FluentMigrator.Abstractions" />
+        <PackageReference Include="FluentMigrator.Runner" />
+        <PackageReference Include="FluentScanning.DependencyInjection" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
+        <PackageReference Include="Npgsql" />
     </ItemGroup>
 
 </Project>

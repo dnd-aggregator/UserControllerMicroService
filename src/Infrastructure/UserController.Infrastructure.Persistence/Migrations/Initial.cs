@@ -1,13 +1,11 @@
 ﻿using FluentMigrator;
-using Itmo.Dev.Platform.Persistence.Postgres.Migrations;
 
 namespace UserController.Infrastructure.Persistence.Migrations;
 
 [Migration(1731949849, "initial")]
-public class Initial : SqlMigration
+public class Initial : Migration
 {
-    protected override string GetUpSql(IServiceProvider serviceProvider) =>
-        """
+    private const string GetUpSql = """
         CREATE TABLE users (
             user_id BIGSERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
@@ -15,9 +13,18 @@ public class Initial : SqlMigration
         );
         """;
 
-    protected override string GetDownSql(IServiceProvider serviceProvider) =>
-        """
+    private const string GetDownSql = """
         drop table users;
         drop type order_state;
         """;
+
+    public override void Up()
+    {
+        Execute.Sql(GetUpSql);
+    }
+
+    public override void Down()
+    {
+        Execute.Sql(GetDownSql);;
+    }
 }

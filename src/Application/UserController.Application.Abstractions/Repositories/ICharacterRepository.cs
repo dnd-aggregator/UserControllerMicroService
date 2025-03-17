@@ -1,6 +1,6 @@
 ﻿using UserController.Application.Models;
 
-namespace UserController.Application.Abstractions.Persistence.Repositories;
+namespace UserController.Application.Abstractions.Repositories;
 
 public interface ICharacterRepository
 {

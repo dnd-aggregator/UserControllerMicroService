@@ -6,7 +6,7 @@ using UserController.Application.Models;
 namespace UserController.Presentation.Http.Controllers;
 
 [ApiController]
-[Route("products/test/[controller]")]
+[Route("api/v1/[controller]")]
 public class CharacterController : ControllerBase
 {
     private readonly ICharacterService _characterService;

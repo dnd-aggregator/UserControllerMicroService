@@ -1,4 +1,4 @@
-﻿using UserController.Application.Abstractions.Persistence;
+﻿using UserController.Application.Abstractions.Repositories;
 using UserController.Application.Contracts;
 using UserController.Application.Contracts.Reqests;
 using UserController.Application.Models;
@@ -8,9 +8,9 @@ namespace UserController.Application;
 
 public class UserService : IUserService
 {
-    private readonly IPersistenceContext _userRepository;
+    private readonly IUserRepository _userRepository;
 
-    public UserService(IPersistenceContext userRepository)
+    public UserService(IUserRepository userRepository)
     {
         _userRepository = userRepository;
     }
@@ -18,19 +18,19 @@ public class UserService : IUserService
     public async Task<long> RegisterUser(CreateUserModelRequest createUserModel, CancellationToken ct)
     {
         var model = new UserModel(createUserModel.Name, createUserModel.PhoneNumber);
-        long id = await _userRepository.UserRepository.AddUser(model, ct);
+        long id = await _userRepository.AddUser(model, ct);
         return id;
     }
 
     public async Task<UserModel?> GetUser(long userId, CancellationToken ct = default)
     {
-        UserModel? model = await _userRepository.UserRepository.GetUser(userId, ct);
+        UserModel? model = await _userRepository.GetUser(userId, ct);
         return model;
     }
 
     public async Task UpdateUser(UserModel userModel, CancellationToken ct = default)
     {
-        await _userRepository.UserRepository.UpdateUser(userModel, ct);
+        await _userRepository.UpdateUser(userModel, ct);
     }
 
     public async Task<CharacterValidationModel> ValidateUser(

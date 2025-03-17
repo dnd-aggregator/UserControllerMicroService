@@ -1,18 +1,17 @@
-﻿using Itmo.Dev.Platform.Persistence.Abstractions.Commands;
-using Itmo.Dev.Platform.Persistence.Abstractions.Connections;
+﻿using Npgsql;
 using System.Data.Common;
-using UserController.Application.Abstractions.Persistence.Repositories;
+using UserController.Application.Abstractions.Repositories;
 using UserController.Application.Models;
 
 namespace UserController.Infrastructure.Persistence.Repositories;
 
 public class CharacterRepository : ICharacterRepository
 {
-    private readonly IPersistenceConnectionProvider _connectionProvider;
+    private readonly NpgsqlDataSource _dataSource;
 
-    public CharacterRepository(IPersistenceConnectionProvider connectionProvider)
+    public CharacterRepository(NpgsqlDataSource dataSource)
     {
-        _connectionProvider = connectionProvider;
+        _dataSource = dataSource;
     }
 
     public async Task<long> AddCharacter(CharacterModel character, CancellationToken cancellationToken)
@@ -27,31 +26,36 @@ public class CharacterRepository : ICharacterRepository
                            RETURNING character_id;
                            """;
 
-        await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
 
-        await using IPersistenceCommand command = connection.CreateCommand(sql)
-            .AddParameter("@character_name", character.CharacterName)
-            .AddParameter("@character_description", character.CharacterDescription)
-            .AddParameter("@character_level", character.CharacterLevel)
-            .AddParameter("@race", character.Race)
-            .AddParameter("@world_view", character.WorldView)
-            .AddParameter("@speed", character.Speed)
-            .AddParameter("@defence", character.Defence)
-            .AddParameter("@health", character.Health)
-            .AddParameter("@max_health", character.MaxHealth)
-            .AddParameter("@strenth", character.Strenth)
-            .AddParameter("@dexterity", character.Dexterity)
-            .AddParameter("@endurance", character.Endurance)
-            .AddParameter("@intelligence", character.Intelligence)
-            .AddParameter("@wisdom", character.Wisdom)
-            .AddParameter("@bonus", character.Bonus)
-            .AddParameter("@personality_traits", character.PersonalityTraits)
-            .AddParameter("@ideals", character.Ideals)
-            .AddParameter("@bonds", character.Bonds)
-            .AddParameter("@flaws", character.Flaws)
-            .AddParameter("@history", character.History)
-            .AddParameter("@user_id", character.UserId)
-            .AddParameter("@status", (int)character.Status);
+        var command = new NpgsqlCommand(sql, connection)
+        {
+            Parameters =
+            {
+                new NpgsqlParameter("@character_name", character.CharacterName),
+                new NpgsqlParameter("@character_description", character.CharacterDescription),
+                new NpgsqlParameter("@character_level", character.CharacterLevel),
+                new NpgsqlParameter("@race", character.Race),
+                new NpgsqlParameter("@world_view", character.WorldView),
+                new NpgsqlParameter("@speed", character.Speed),
+                new NpgsqlParameter("@defence", character.Defence),
+                new NpgsqlParameter("@health", character.Health),
+                new NpgsqlParameter("@max_health", character.MaxHealth),
+                new NpgsqlParameter("@strenth", character.Strenth),
+                new NpgsqlParameter("@dexterity", character.Dexterity),
+                new NpgsqlParameter("@endurance", character.Endurance),
+                new NpgsqlParameter("@intelligence", character.Intelligence),
+                new NpgsqlParameter("@wisdom", character.Wisdom),
+                new NpgsqlParameter("@bonus", character.Bonus),
+                new NpgsqlParameter("@personality_traits", character.PersonalityTraits),
+                new NpgsqlParameter("@ideals", character.Ideals),
+                new NpgsqlParameter("@bonds", character.Bonds),
+                new NpgsqlParameter("@flaws", character.Flaws),
+                new NpgsqlParameter("@history", character.History),
+                new NpgsqlParameter("@user_id", character.UserId),
+                new NpgsqlParameter("@status", (int)character.Status),
+            }
+        };
 
         DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
@@ -68,9 +72,14 @@ public class CharacterRepository : ICharacterRepository
             "INSERT INTO character_gear (character_id, gear_item) VALUES (@character_id, @gear_item);";
         foreach (string gear in character.Gear)
         {
-            await using IPersistenceCommand gearCommand = connection.CreateCommand(gearSql)
-                .AddParameter("@character_id", characterId)
-                .AddParameter("@gear_item", gear);
+            var gearCommand = new NpgsqlCommand(gearSql, connection)
+            {
+                Parameters =
+                {
+                    new NpgsqlParameter("@character_id", characterId),
+                    new NpgsqlParameter("@gear_item", gear)
+                }
+            };
             await gearCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -78,9 +87,14 @@ public class CharacterRepository : ICharacterRepository
             "INSERT INTO character_weapons (character_id, weapon_item) VALUES (@character_id, @weapon_item);";
         foreach (string weapon in character.Weapons)
         {
-            await using IPersistenceCommand weaponCommand = connection.CreateCommand(weaponsSql)
-                .AddParameter("@character_id", characterId)
-                .AddParameter("@weapon_item", weapon);
+            var weaponCommand = new NpgsqlCommand(weaponsSql, connection)
+            {
+                Parameters =
+                {
+                    new NpgsqlParameter("@character_id", characterId),
+                    new NpgsqlParameter("@weapon_item", weapon)
+                }
+            };
             await weaponCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -88,9 +102,14 @@ public class CharacterRepository : ICharacterRepository
             "INSERT INTO character_active_skills (character_id, active_skill) VALUES (@character_id, @active_skill);";
         foreach (string skill in character.ActiveSkills)
         {
-            await using IPersistenceCommand skillCommand = connection.CreateCommand(activeSkillsSql)
-                .AddParameter("@character_id", characterId)
-                .AddParameter("@active_skill", skill);
+            var skillCommand = new NpgsqlCommand(activeSkillsSql, connection)
+            {
+                Parameters =
+                {
+                    new NpgsqlParameter("@character_id", characterId),
+                    new NpgsqlParameter("@skill", skill)
+                }
+            };
             await skillCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -98,9 +117,14 @@ public class CharacterRepository : ICharacterRepository
             "INSERT INTO character_passive_skills (character_id, passive_skill) VALUES (@character_id, @passive_skill);";
         foreach (string skill in character.PassiveSkills)
         {
-            await using IPersistenceCommand skillCommand = connection.CreateCommand(passiveSkillsSql)
-                .AddParameter("@character_id", characterId)
-                .AddParameter("@passive_skill", skill);
+            var skillCommand = new NpgsqlCommand(passiveSkillsSql, connection)
+            {
+                Parameters =
+                {
+                    new NpgsqlParameter("@character_id", characterId),
+                    new NpgsqlParameter("@passive_skill", skill)
+                }
+            };
             await skillCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -117,10 +141,16 @@ public class CharacterRepository : ICharacterRepository
                            WHERE character_id = @character_id;
                            """;
 
-        await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
 
-        await using IPersistenceCommand command = connection.CreateCommand(sql)
-            .AddParameter("@character_id", characterId);
+        var command = new NpgsqlCommand(sql, connection)
+        {
+            Parameters =
+            {
+                new NpgsqlParameter("@character_id", characterId),
+            }
+        };
+
 
         await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
@@ -188,31 +218,36 @@ public class CharacterRepository : ICharacterRepository
                                           WHERE character_id = @character_id;
                                           """;
 
-        await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
 
-        await using IPersistenceCommand characterCommand = connection.CreateCommand(updateCharacterSql)
-            .AddParameter("@character_id", character.CharacterId)
-            .AddParameter("@character_name", character.CharacterName)
-            .AddParameter("@character_description", character.CharacterDescription)
-            .AddParameter("@character_level", character.CharacterLevel)
-            .AddParameter("@race", character.Race)
-            .AddParameter("@world_view", character.WorldView)
-            .AddParameter("@speed", character.Speed)
-            .AddParameter("@defence", character.Defence)
-            .AddParameter("@health", character.Health)
-            .AddParameter("@max_health", character.MaxHealth)
-            .AddParameter("@strenth", character.Strenth)
-            .AddParameter("@dexterity", character.Dexterity)
-            .AddParameter("@endurance", character.Endurance)
-            .AddParameter("@intelligence", character.Intelligence)
-            .AddParameter("@wisdom", character.Wisdom)
-            .AddParameter("@bonus", character.Bonus)
-            .AddParameter("@personality_traits", character.PersonalityTraits)
-            .AddParameter("@ideals", character.Ideals)
-            .AddParameter("@bonds", character.Bonds)
-            .AddParameter("@flaws", character.Flaws)
-            .AddParameter("@history", character.History)
-            .AddParameter("@status", (int)character.Status);
+        var characterCommand = new NpgsqlCommand(updateCharacterSql, connection)
+        {
+            Parameters =
+            {
+                new NpgsqlParameter("@character_id", character.CharacterId),
+                new NpgsqlParameter("@character_name", character.CharacterName),
+                new NpgsqlParameter("@character_description", character.CharacterDescription),
+                new NpgsqlParameter("@character_level", character.CharacterLevel),
+                new NpgsqlParameter("@race", character.Race),
+                new NpgsqlParameter("@world_view", character.WorldView),
+                new NpgsqlParameter("@speed", character.Speed),
+                new NpgsqlParameter("@defence", character.Defence),
+                new NpgsqlParameter("@health", character.Health),
+                new NpgsqlParameter("@max_health", character.MaxHealth),
+                new NpgsqlParameter("@strenth", character.Strenth),
+                new NpgsqlParameter("@dexterity", character.Dexterity),
+                new NpgsqlParameter("@endurance", character.Endurance),
+                new NpgsqlParameter("@intelligence", character.Intelligence),
+                new NpgsqlParameter("@wisdom", character.Wisdom),
+                new NpgsqlParameter("@bonus", character.Bonus),
+                new NpgsqlParameter("@personality_traits", character.PersonalityTraits),
+                new NpgsqlParameter("@ideals", character.Ideals),
+                new NpgsqlParameter("@bonds", character.Bonds),
+                new NpgsqlParameter("@flaws", character.Flaws),
+                new NpgsqlParameter("@history", character.History),
+                new NpgsqlParameter("@status", (int)character.Status)
+            }
+        };
 
         await characterCommand.ExecuteNonQueryAsync(cancellationToken);
 
@@ -251,21 +286,32 @@ public class CharacterRepository : ICharacterRepository
         string columnName,
         long characterId,
         IReadOnlyCollection<string> newData,
-        IPersistenceConnection connection,
+        NpgsqlConnection connection,
         CancellationToken cancellationToken)
     {
-        string deleteSql = $"DELETE FROM {tableName} WHERE character_id = @character_id;";
-        await using IPersistenceCommand deleteCommand = connection.CreateCommand(deleteSql)
-            .AddParameter("@character_id", characterId);
+        string deleteSql = $"""
+                           DELETE FROM @tableName
+                           WHERE character_id = @character_id;
+                           """;
+        await using var deleteCommand = new NpgsqlCommand(deleteSql, connection);
+        deleteCommand.Parameters.Add(new NpgsqlParameter("@character_id", characterId));
+        deleteCommand.Parameters.Add(new NpgsqlParameter("@tableName", tableName));
         await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
 
-        string insertSql =
-            $"INSERT INTO {tableName} (character_id, {columnName}) VALUES (@character_id, @{columnName});";
+        string insertSql = """
+                           INSERT INTO {tableName} (character_id, {columnName}) 
+                           VALUES (@character_id, @{columnName})
+                           """;
         foreach (string item in newData)
         {
-            await using IPersistenceCommand insertCommand = connection.CreateCommand(insertSql)
-                .AddParameter("@character_id", characterId)
-                .AddParameter($"@{columnName}", item);
+            var insertCommand = new NpgsqlCommand(insertSql, connection)
+            {
+                Parameters =
+                {
+                    new NpgsqlParameter("@character_id", characterId),
+                    new NpgsqlParameter($"@columnName", item),
+                }
+            };
             await insertCommand.ExecuteNonQueryAsync(cancellationToken);
         }
     }
@@ -276,11 +322,17 @@ public class CharacterRepository : ICharacterRepository
         long characterId,
         CancellationToken cancellationToken)
     {
-        string sql = $"SELECT {columnName} FROM {tableName} WHERE character_id = @character_id;";
+        string sql = """
+                     SELECT @columnName 
+                     FROM @tableName
+                     WHERE character_id = @character_id
+                     """;
         var items = new List<string>();
-        await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
-        await using IPersistenceCommand command = connection.CreateCommand(sql)
-            .AddParameter("@character_id", characterId);
+        await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.Add(new NpgsqlParameter("@character_id", characterId));
+        command.Parameters.Add(new NpgsqlParameter("@columnName", columnName));
+        command.Parameters.Add(new NpgsqlParameter("@tableName", tableName));
 
         await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken)) items.Add(reader.GetString(0));
