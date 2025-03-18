@@ -19,10 +19,7 @@ public class CharacterGrpcController : CharacterService.CharacterServiceBase
         ServerCallContext context)
     {
         Application.Models.CharacterModel? character = await _characterService.GetCharacter(request.CharacterId);
-        if (character == null)
-        {
-            throw new RpcException(new Status(StatusCode.NotFound, "Character not found"));
-        }
+        if (character == null) throw new RpcException(new Status(StatusCode.NotFound, "Character not found"));
 
         return new GetCharacterResponse
         {

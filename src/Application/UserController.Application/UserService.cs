@@ -40,8 +40,6 @@ public class UserService : IUserService
     {
         UserModel? user = await GetUser(userId, ct);
         if (user == null) return new CharacterValidationModel.UserNotFoundValidationResult();
-        if (user.Characters.FirstOrDefault(character => character.CharacterId == characterId) == null)
-            return new CharacterValidationModel.CharacterNotFoundValidationResult();
         return new CharacterValidationModel.SuccessValidationResult();
     }
 }

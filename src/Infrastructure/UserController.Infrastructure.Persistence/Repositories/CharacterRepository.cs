@@ -98,18 +98,16 @@ public class CharacterRepository : ICharacterRepository
             await weaponCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        const string activeSkillsSql =
-            "INSERT INTO character_active_skills (character_id, active_skill) VALUES (@character_id, @active_skill);";
+        const string activeSkillsSql = """
+                                       INSERT INTO character_active_skills (character_id, active_skill) 
+                                       VALUES (@character_id, @active_skill)
+                                       """;
+
         foreach (string skill in character.ActiveSkills)
         {
-            var skillCommand = new NpgsqlCommand(activeSkillsSql, connection)
-            {
-                Parameters =
-                {
-                    new NpgsqlParameter("@character_id", characterId),
-                    new NpgsqlParameter("@skill", skill)
-                }
-            };
+            var skillCommand = new NpgsqlCommand(activeSkillsSql, connection);
+            skillCommand.Parameters.Add(new NpgsqlParameter("@character_id", characterId));
+            skillCommand.Parameters.Add(new NpgsqlParameter("@active_skill", skill));
             await skillCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -143,13 +141,8 @@ public class CharacterRepository : ICharacterRepository
 
         await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
 
-        var command = new NpgsqlCommand(sql, connection)
-        {
-            Parameters =
-            {
-                new NpgsqlParameter("@character_id", characterId),
-            }
-        };
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.Add(new NpgsqlParameter("@character_id", characterId));
 
 
         await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -290,31 +283,26 @@ public class CharacterRepository : ICharacterRepository
         CancellationToken cancellationToken)
     {
         string deleteSql = $"""
-                           DELETE FROM @tableName
-                           WHERE character_id = @character_id;
-                           """;
+                            DELETE FROM {tableName}
+                            WHERE character_id = @character_id;
+                            """;
         await using var deleteCommand = new NpgsqlCommand(deleteSql, connection);
         deleteCommand.Parameters.Add(new NpgsqlParameter("@character_id", characterId));
-        deleteCommand.Parameters.Add(new NpgsqlParameter("@tableName", tableName));
         await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
 
-        string insertSql = """
-                           INSERT INTO {tableName} (character_id, {columnName}) 
-                           VALUES (@character_id, @{columnName})
-                           """;
+        string insertSql = $"""
+                            INSERT INTO {tableName} (character_id, {columnName}) 
+                            VALUES (@character_id, @value)
+                            """;
         foreach (string item in newData)
         {
-            var insertCommand = new NpgsqlCommand(insertSql, connection)
-            {
-                Parameters =
-                {
-                    new NpgsqlParameter("@character_id", characterId),
-                    new NpgsqlParameter($"@columnName", item),
-                }
-            };
+            await using var insertCommand = new NpgsqlCommand(insertSql, connection);
+            insertCommand.Parameters.Add(new NpgsqlParameter("@character_id", characterId));
+            insertCommand.Parameters.Add(new NpgsqlParameter("@value", item));
             await insertCommand.ExecuteNonQueryAsync(cancellationToken);
         }
     }
+
 
     private async Task<IReadOnlyCollection<string>> GetCharacterRelatedData(
         string tableName,
@@ -322,17 +310,16 @@ public class CharacterRepository : ICharacterRepository
         long characterId,
         CancellationToken cancellationToken)
     {
-        string sql = """
-                     SELECT @columnName 
-                     FROM @tableName
-                     WHERE character_id = @character_id
-                     """;
+        string sql = $"""
+                      SELECT {columnName} 
+                      FROM {tableName}
+                      WHERE character_id = @character_id
+                      """;
+
         var items = new List<string>();
         await using NpgsqlConnection connection = await _dataSource.OpenConnectionAsync(cancellationToken);
         await using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.Add(new NpgsqlParameter("@character_id", characterId));
-        command.Parameters.Add(new NpgsqlParameter("@columnName", columnName));
-        command.Parameters.Add(new NpgsqlParameter("@tableName", tableName));
 
         await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken)) items.Add(reader.GetString(0));

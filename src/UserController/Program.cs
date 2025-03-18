@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using UserController.Application.Extensions;
+using UserController.Infrastructure.Persistence.Background;
 using UserController.Infrastructure.Persistence.Extensions;
 using UserController.Presentation.Grpc.Extensions;
 
@@ -14,10 +15,10 @@ builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<JsonSerialize
 builder.Services.AddApplication();
 builder.Services.AddInfrastructurePersistence();
 builder.Services.AddPresentationGrpc();
+builder.Services.AddHostedService<MigrationBackgroundService>();
 builder.Services
     .AddControllers()
     .AddNewtonsoftJson();
-
 builder.Services.AddSwaggerGen().AddEndpointsApiExplorer();
 
 WebApplication app = builder.Build();
