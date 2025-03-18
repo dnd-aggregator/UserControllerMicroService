@@ -10,14 +10,14 @@
         <PackageReference Include="FluentMigrator.Runner" />
         <PackageReference Include="FluentScanning.DependencyInjection" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" />
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
         <PackageReference Include="Npgsql" />
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="Microsoft.Extensions.Hosting.Abstractions">
-        <HintPath>..\..\..\..\..\..\..\..\Program Files\dotnet\shared\Microsoft.AspNetCore.App\8.0.8\Microsoft.Extensions.Hosting.Abstractions.dll</HintPath>
-      </Reference>
+      <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
     </ItemGroup>
 
 </Project>
